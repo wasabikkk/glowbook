@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Booking – Login</title>
+    <script src="js/console-filter.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+    <style>
+        body {
+            background-image: url('img/facial_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            max-width: 500px;
+            width: 90%;
+            margin: 0;
+            padding: 40px;
+        }
+        .system-header {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .auth-wrapper h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="system-header">GlowBook</div>
+        <h1>Login</h1>
+
+        <div id="login-error" class="error" style="display:none;"></div>
+
+        <form id="login-form">
+            <label>Username
+                <input type="text" name="username" id="login-username" required>
+            </label>
+
+            <label>Password
+                <input type="password" name="password" id="login-password" required>
+            </label>
+
+            <p style="margin-top: -10px; margin-bottom: 10px; text-align: right;">
+                <a href="forgot-password.html" style="font-size: 0.9em;">Forgot Password?</a>
+            </p>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <p>Don't have an account?
+            <a href="register.html">Register here</a>
+        </p>
+    </div>
+
+    <script>
+        $(function () {
+            $('#login-form').on('submit', function (e) {
+                e.preventDefault();
+
+                const payload = {
+                    username: $('#login-username').val().trim(),
+                    password: $('#login-password').val()
+                };
+
+                $('#login-error').hide().text('');
+
+                fbLogin(payload)
+                    .done(function (res) {
+                        if (res.token) {
+                            fbSetToken(res.token);
+                            // Check if verified and redirect accordingly
+                            fbFetchProfile()
+                                .done(function(profileRes) {
+                                    const user = profileRes.user;
+                                    if (!user.email_verified_at) {
+                                        window.location.href = 'verify-email.html';
+                                    } else {
+                                        fbRedirectByRole(user);
+                                    }
+                                })
+                                .fail(function() {
+                                    window.location.href = 'index.html';
+                                });
+                        } else {
+                            $('#login-error').text('No token returned.').show();
+                        }
+                    })
+                    .fail(function (xhr) {
+                        let msg = 'Login failed.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        $('#login-error').text(msg).show();
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile – Facial Booking</title>
+    <script src="js/console-filter.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <h2>Profile</h2>
+        <div>
+            <button id="dashboard-link" class="profile-btn" onclick="goToDashboard()">Dashboard</button>
+            <button onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="profile-card">
+            <!-- Profile Information Section -->
+            <div class="profile-section">
+                <h3>Profile Information</h3>
+                <form id="profile-form" onsubmit="updateProfile(event)">
+                    <div class="avatar-section">
+                        <div class="avatar-container">
+                            <img id="avatar-preview" src="" alt="Avatar">
+                        </div>
+                        <label class="avatar-label">
+                            <input type="file" id="avatar-input" accept="image/*" onchange="previewAvatar(this)">
+                            Choose Profile Picture
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label>First Name
+                            <input type="text" id="profile-first-name" required>
+                        </label>
+                        <label>Last Name
+                            <input type="text" id="profile-last-name" required>
+                        </label>
+                    </div>
+                    <label>Email (read-only)
+                        <input type="email" id="profile-email" readonly>
+                    </label>
+                    <label>Phone
+                        <div class="phone-input-wrapper">
+                            <span class="phone-prefix">+63</span>
+                            <input type="text" id="profile-phone" placeholder="9123456789" maxlength="10">
+                        </div>
+                    </label>
+                    <label>Address
+                        <textarea id="profile-address" rows="3" placeholder="Enter your complete address"></textarea>
+                    </label>
+                    <button type="submit" class="btn-primary">Update Profile</button>
+                </form>
+            </div>
+
+            <!-- Change Password Section -->
+            <div class="password-section">
+                <h3>Change Password</h3>
+                <form id="password-form" onsubmit="changePassword(event)">
+                    <label>Current Password
+                        <input type="password" id="current-password" required>
+                    </label>
+                    <label>New Password
+                        <input type="password" id="new-password" required>
+                    </label>
+                    <label>Confirm New Password
+                        <input type="password" id="confirm-password" required>
+                    </label>
+                    <button type="submit" class="btn-primary">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        $(function() {
+            fbRequireAuth();
+            
+            fbFetchProfile()
+                .done(function(res) {
+                    currentUser = res.user;
+                    loadProfile();
+                    setDashboardLink();
+                })
+                .fail(function() {
+                    window.location.href = 'login.html';
+                });
+        });
+
+        function setDashboardLink() {
+            // This function is kept for compatibility but not needed for button
+        }
+
+        function goToDashboard() {
+            let dashboardUrl = 'index.html';
+            switch(currentUser.role) {
+                case 'admin':
+                    dashboardUrl = 'admin-dashboard.html';
+                    break;
+                case 'aesthetician':
+                    dashboardUrl = 'aesthetician-dashboard.html';
+                    break;
+                case 'client':
+                    dashboardUrl = 'client-dashboard.html';
+                    break;
+            }
+            window.location.href = dashboardUrl;
+        }
+
+        // Prevent focus on read-only email field
+        $(function() {
+            $('#profile-email').on('focus', function(e) {
+                e.preventDefault();
+                $(this).blur();
+                return false;
+            }).on('mousedown', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        });
+
+        function handleLogout() {
+            fbLogout().always(function() {
+                window.location.href = 'login.html';
+            });
+        }
+
+        function loadProfile() {
+            $('#profile-first-name').val(currentUser.first_name || '');
+            $('#profile-last-name').val(currentUser.last_name || '');
+            $('#profile-email').val(currentUser.email || '');
+            
+            // Handle phone number - remove +63 prefix if present
+            let phone = currentUser.phone || '';
+            if (phone.startsWith('+63')) {
+                phone = phone.substring(3);
+            } else if (phone.startsWith('63')) {
+                phone = phone.substring(2);
+            }
+            $('#profile-phone').val(phone);
+            
+            $('#profile-address').val(currentUser.address || '');
+            
+            // Set avatar or use default
+            const storageBase = typeof STORAGE_BASE !== 'undefined' ? STORAGE_BASE : 'http://127.0.0.1:8000';
+            const defaultAvatar = storageBase + '/storage/avatars/default.png';
+            if (currentUser.avatar && currentUser.avatar !== 'default.png' && currentUser.avatar !== null) {
+                const avatarUrl = storageBase + '/storage/avatars/' + currentUser.avatar;
+                $('#avatar-preview').attr('src', avatarUrl).on('error', function() {
+                    // If user avatar fails to load, use default
+                    $(this).attr('src', defaultAvatar).off('error');
+                });
+            } else {
+                $('#avatar-preview').attr('src', defaultAvatar);
+            }
+        }
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#avatar-preview').attr('src', e.target.result).show();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function updateProfile(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('first_name', $('#profile-first-name').val());
+            formData.append('last_name', $('#profile-last-name').val());
+            
+            // Add +63 prefix to phone number
+            let phone = $('#profile-phone').val().trim();
+            // Remove any spaces
+            phone = phone.replace(/\s+/g, '');
+            
+            if (phone && phone.length > 0) {
+                // Remove any existing +63 or 63 prefix
+                if (phone.startsWith('+63')) {
+                    phone = phone.substring(3).trim();
+                } else if (phone.startsWith('63')) {
+                    phone = phone.substring(2).trim();
+                }
+                // Only add if we have digits after removing prefix
+                if (phone && phone.length > 0) {
+                    formData.append('phone', '+63' + phone);
+                } else {
+                    // If phone becomes empty after removing prefix, send empty string to clear it
+                    formData.append('phone', '');
+                }
+            } else {
+                // If phone is empty, send empty string to allow clearing the phone number
+                formData.append('phone', '');
+            }
+            
+            formData.append('address', $('#profile-address').val().trim());
+            
+            const avatarFile = $('#avatar-input')[0].files[0];
+            if (avatarFile) {
+                formData.append('avatar', avatarFile);
+            }
+            
+            // Add method spoofing for PUT request with FormData
+            formData.append('_method', 'PUT');
+            
+            const apiBase = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:8000/api';
+            $.ajax({
+                url: apiBase + '/profile',
+                method: 'POST', // Use POST with method spoofing
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: fbAuthHeaders(),
+                success: function(res) {
+                    alert('Profile updated successfully!');
+                    currentUser = res.user;
+                    loadProfile();
+                },
+                error: function(xhr) {
+                    console.error('Profile update error:', xhr);
+                    let errorMsg = 'Failed to update profile';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON.errors) {
+                            const errors = [];
+                            Object.keys(xhr.responseJSON.errors).forEach(key => {
+                                errors.push(xhr.responseJSON.errors[key].join(', '));
+                            });
+                            errorMsg = errors.join('\n');
+                        }
+                    }
+                    alert('Error: ' + errorMsg);
+                }
+            });
+        }
+
+        function changePassword(e) {
+            e.preventDefault();
+            
+            const newPassword = $('#new-password').val();
+            const confirmPassword = $('#confirm-password').val();
+            
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match!');
+                return;
+            }
+            
+            fbChangePassword({
+                current_password: $('#current-password').val(),
+                password: newPassword,
+                password_confirmation: confirmPassword
+            })
+            .done(function() {
+                alert('Password changed successfully!');
+                $('#password-form')[0].reset();
+            })
+            .fail(function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.message || 'Failed to change password'));
+            });
+        }
+    </script>
+</body>
+</html>
+

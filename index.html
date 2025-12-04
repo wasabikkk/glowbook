@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Booking – Home</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <h1>Facial Booking System</h1>
+        <p>Loading...</p>
+    </div>
+
+    <script>
+        $(function () {
+            const token = fbGetToken();
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check if user is verified and redirect
+            fbFetchProfile()
+                .done(function(res) {
+                    const user = res.user;
+                    
+                    if (!user.email_verified_at) {
+                        window.location.href = 'verify-email.html';
+                        return;
+                    }
+                    
+                    fbRedirectByRole(user);
+                })
+                .fail(function() {
+                    window.location.href = 'login.html';
+                });
+        });
+    </script>
+</body>
+</html>
+

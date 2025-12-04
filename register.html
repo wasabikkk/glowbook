@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Booking – Register</title>
+    <script src="js/console-filter.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+    <style>
+        body {
+            background-image: url('img/facial_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            max-width: 500px;
+            width: 90%;
+            margin: 0;
+            padding: 40px;
+        }
+        .system-header {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .auth-wrapper h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="system-header">GlowBook</div>
+        <h1>Create an account</h1>
+
+        <div id="register-error" class="error" style="display:none;"></div>
+        <div id="register-success" class="success" style="display:none;"></div>
+
+        <form id="register-form">
+            <!-- Username instead of generic Name -->
+            <label>Username
+                <input type="text" name="username" id="reg-username" required>
+            </label>
+
+            <label>First name
+                <input type="text" name="first_name" id="reg-first-name" required>
+            </label>
+
+            <label>Last name
+                <input type="text" name="last_name" id="reg-last-name" required>
+            </label>
+
+            <label>Email
+                <input type="email" name="email" id="reg-email" required>
+            </label>
+
+            <label>Password
+                <input type="password" name="password" id="reg-password" required>
+            </label>
+
+            <label>Confirm Password
+                <input type="password" name="password_confirmation" id="reg-password-confirm" required>
+            </label>
+
+            <button type="submit">Register</button>
+        </form>
+
+        <p>Already have an account?
+            <a href="login.html">Login here</a>
+        </p>
+    </div>
+
+    <script>
+        $(function () {
+            $('#register-form').on('submit', function (e) {
+                e.preventDefault();
+
+                const payload = {
+                    username:               $('#reg-username').val().trim(),
+                    first_name:             $('#reg-first-name').val().trim(),
+                    last_name:              $('#reg-last-name').val().trim(),
+                    email:                  $('#reg-email').val().trim(),
+                    password:               $('#reg-password').val(),
+                    password_confirmation:  $('#reg-password-confirm').val()
+                };
+
+                $('#register-error').hide().text('');
+                $('#register-success').hide().text('');
+
+                fbRegister(payload)
+                    .done(function (res) {
+                        if (res.token) {
+                            fbSetToken(res.token);
+                        }
+                        
+                        // Show popup notification
+                        alert('Account is successfully registered!');
+                        
+                        // Show success message
+                        $('#register-success').text(
+                            'Registration successful. Please check your email for the verification code.'
+                        ).show();
+                        
+                        // Redirect to verification page after 1 second delay
+                        setTimeout(() => {
+                            window.location.href = 'verify-email.html';
+                        }, 1000);
+                    })
+                    .fail(function (xhr) {
+                        let msg = 'Registration failed.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.errors) {
+                                const flat = [];
+                                Object.values(xhr.responseJSON.errors).forEach(arr => {
+                                    flat.push(arr.join(' '));
+                                });
+                                msg = flat.join(' ');
+                            } else if (xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                        }
+                        $('#register-error').text(msg).show();
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

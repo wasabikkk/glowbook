@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Booking – Verify Email</title>
+    <script src="js/console-filter.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <h1>Verify Your Email</h1>
+
+        <div id="verify-error" class="error" style="display:none;"></div>
+        <div id="verify-success" class="success" style="display:none;"></div>
+
+        <p>Please enter the 6-digit verification code sent to your email.</p>
+
+        <form id="verify-form">
+            <label>Verification Code
+                <input type="text" name="code" id="verify-code" maxlength="6" pattern="[0-9]{6}" required>
+            </label>
+
+            <button type="submit">Verify</button>
+        </form>
+
+        <p>
+            <a href="#" id="resend-link">Resend verification code</a>
+        </p>
+    </div>
+
+    <script>
+        $(function () {
+            fbRequireAuth();
+
+            $('#verify-code').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            $('#verify-form').on('submit', function (e) {
+                e.preventDefault();
+
+                const code = $('#verify-code').val().trim();
+
+                if (code.length !== 6) {
+                    $('#verify-error').text('Please enter a 6-digit code.').show();
+                    return;
+                }
+
+                $('#verify-error').hide().text('');
+                $('#verify-success').hide().text('');
+
+                fbVerifyEmailCode(code)
+                    .done(function (res) {
+                        $('#verify-success').text('Email verified successfully! Redirecting to login...').show();
+                        
+                        // Show popup notification
+                        alert('Email verified successfully! Please login to continue.');
+                        
+                        // Clear token and redirect to login page after 1 second
+                        setTimeout(() => {
+                            fbSetToken(''); // Clear token so user needs to login
+                            window.location.href = 'login.html';
+                        }, 1000);
+                    })
+                    .fail(function (xhr) {
+                        let msg = 'Verification failed.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        $('#verify-error').text(msg).show();
+                    });
+            });
+
+            $('#resend-link').on('click', function(e) {
+                e.preventDefault();
+                $('#verify-error').hide().text('');
+                
+                fbResendVerificationCode()
+                    .done(function() {
+                        $('#verify-success').text('Verification code resent to your email.').show();
+                        setTimeout(() => $('#verify-success').hide(), 3000);
+                    })
+                    .fail(function(xhr) {
+                        let msg = 'Failed to resend code.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        $('#verify-error').text(msg).show();
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
+

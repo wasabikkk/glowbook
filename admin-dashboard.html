@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – Facial Booking</title>
+    <script src="js/console-filter.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/api.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <h2>Admin Dashboard</h2>
+        <div>
+            <span id="user-name-display" style="margin-right: 15px; font-weight: 500;"></span>
+            <button onclick="window.location.href='profile.html'" class="profile-btn">Profile</button>
+            <button onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn" id="services-tab-btn" onclick="showTab('services')">Services</button>
+            <button class="tab-btn" id="bookings-tab-btn" onclick="showTab('bookings')">Bookings</button>
+            <button class="tab-btn" id="users-tab-btn" onclick="showTab('users')">Users</button>
+        </div>
+
+        <!-- Services Tab -->
+        <div id="services-tab" class="tab-content">
+            <div class="section-header">
+                <h3>Service Management</h3>
+                <button onclick="showServiceModal()">+ Add Service</button>
+            </div>
+            
+            <div class="filters">
+                <input type="text" id="service-search" placeholder="Search services..." onkeyup="loadServices()">
+                <select id="service-status-filter" onchange="loadServices()">
+                    <option value="all">All</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div id="services-list"></div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="bookings-tab" class="tab-content">
+            <div class="section-header">
+                <h3>Bookings</h3>
+            </div>
+            
+            <div class="filters">
+                <select id="booking-status-filter" onchange="loadBookings()">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="completed">Completed</option>
+                    <option value="expired">Expired</option>
+                </select>
+            </div>
+
+            <div id="bookings-list"></div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content">
+            <div class="section-header">
+                <h3>User Management</h3>
+                <button onclick="showUserModal()">+ Add User</button>
+            </div>
+            
+            <div class="filters">
+                <input type="text" id="user-search" placeholder="Search users..." onkeyup="loadUsers()">
+                <select id="user-role-filter" onchange="loadUsers()">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="aesthetician">Aesthetician</option>
+                    <option value="client">Client</option>
+                </select>
+            </div>
+
+            <div id="users-list"></div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="user-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeUserModal()">&times;</span>
+            <h3 id="user-modal-title">Add User</h3>
+            <form id="user-form" onsubmit="saveUser(event)">
+                <input type="hidden" id="user-id">
+                <label>Name <input type="text" id="user-name" required></label>
+                <label>First Name <input type="text" id="user-first-name" required></label>
+                <label>Last Name <input type="text" id="user-last-name" required></label>
+                <label>Email <input type="email" id="user-email" required></label>
+                <label>Password <input type="password" id="user-password"></label>
+                <label>Role
+                    <select id="user-role" required>
+                        <option value="admin">Admin</option>
+                        <option value="aesthetician">Aesthetician</option>
+                        <option value="client">Client</option>
+                    </select>
+                </label>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="service-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeServiceModal()">&times;</span>
+            <h3 id="service-modal-title">Add Service</h3>
+            <form id="service-form" onsubmit="return saveService(event);">
+                <input type="hidden" id="service-id">
+                <label>Name <input type="text" id="service-name" required></label>
+                <label>Description <textarea id="service-description"></textarea></label>
+                <label>Price (₱) <input type="number" id="service-price" step="0.01" min="0" required></label>
+                <label>Duration <input type="number" id="service-duration" min="1" step="1" required> <span style="color: #666; font-size: 0.9em;">(in minutes)</span></label>
+                <label>Image <input type="file" id="service-image" accept="image/*" onchange="previewServiceImage(this)"></label>
+                <div id="service-image-preview" style="margin: 10px 0; display: none;">
+                    <img id="service-image-preview-img" src="" alt="Service Image Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <label>Active <input type="checkbox" id="service-active" checked></label>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Set initial active tab immediately to prevent flash
+        (function() {
+            let currentTab = 'services';
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                if (['services', 'bookings', 'users'].includes(hash)) {
+                    currentTab = hash;
+                }
+            } else {
+                const savedTab = localStorage.getItem('adminDashboardTab');
+                if (savedTab && ['services', 'bookings', 'users'].includes(savedTab)) {
+                    currentTab = savedTab;
+                }
+            }
+            
+            // Set active tab and button immediately
+            document.getElementById(currentTab + '-tab').classList.add('active');
+            document.getElementById(currentTab + '-tab-btn').classList.add('active');
+        })();
+    </script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>
+
