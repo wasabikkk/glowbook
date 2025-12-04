@@ -527,34 +527,39 @@ function createBooking(e) {
             client_note: $('#booking-notes').val() || null
         };
         
-            fbCreateBooking(data)
-                .done(function() {
-                    alert('Booking created successfully!');
-                    $('#booking-form')[0].reset();
-                    $('#booking-date-display').val('');
-                    selectedService = null;
-                    showStep('step-service-list');
-                    showTab('my-bookings');
-                    loadMyBookings();
-                })
-                .fail(function(xhr) {
-                    let errorMsg = 'Failed to create booking';
-                    if (xhr.responseJSON) {
-                        if (xhr.responseJSON.error) {
-                            errorMsg = xhr.responseJSON.error;
-                        } else if (xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        } else if (xhr.responseJSON.errors) {
-                            const errors = [];
-                            Object.values(xhr.responseJSON.errors).forEach(arr => {
-                                errors.push(arr.join(', '));
-                            });
-                            errorMsg = errors.join('\n');
-                        }
+        // Show loading indicator
+        showLoading('Creating your booking...');
+        
+        fbCreateBooking(data)
+            .done(function() {
+                hideLoading();
+                alert('Booking created successfully!');
+                $('#booking-form')[0].reset();
+                $('#booking-date-display').val('');
+                selectedService = null;
+                showStep('step-service-list');
+                showTab('my-bookings');
+                loadMyBookings();
+            })
+            .fail(function(xhr) {
+                hideLoading();
+                let errorMsg = 'Failed to create booking';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        const errors = [];
+                        Object.values(xhr.responseJSON.errors).forEach(arr => {
+                            errors.push(arr.join(', '));
+                        });
+                        errorMsg = errors.join('\n');
                     }
-                    alert('Error: ' + errorMsg);
-                });
-        }
+                }
+                alert('Error: ' + errorMsg);
+            });
+    }
 }
 
 function loadMyBookings() {
@@ -634,11 +639,15 @@ function loadMyBookings() {
 function cancelBooking(bookingId) {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
     
+    showLoading('Cancelling booking...');
+    
     fbCancelBooking(bookingId)
         .done(function() {
+            hideLoading();
             loadMyBookings();
         })
         .fail(function(xhr) {
+            hideLoading();
             alert('Error: ' + (xhr.responseJSON?.message || xhr.responseJSON?.error || 'Failed to cancel booking'));
         });
 }

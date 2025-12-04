@@ -138,11 +138,15 @@ function getStatusActions(booking) {
 function updateStatus(bookingId, newStatus) {
     if (!confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
     
+    showLoading('Updating booking status...');
+    
     fbUpdateBookingStatus(bookingId, newStatus)
         .done(function() {
+            hideLoading();
             loadBookings();
         })
         .fail(function(xhr) {
+            hideLoading();
             alert('Error: ' + (xhr.responseJSON?.message || xhr.responseJSON?.error || 'Failed to update status'));
         });
 }

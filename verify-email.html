@@ -51,9 +51,16 @@
 
                 $('#verify-error').hide().text('');
                 $('#verify-success').hide().text('');
+                
+                // Show loading indicator
+                const submitButton = $(this).find('button[type="submit"]');
+                setButtonLoading(submitButton, true);
+                showLoading('Verifying email...');
 
                 fbVerifyEmailCode(code)
                     .done(function (res) {
+                        hideLoading();
+                        setButtonLoading(submitButton, false);
                         $('#verify-success').text('Email verified successfully! Redirecting to login...').show();
                         
                         // Show popup notification
@@ -66,6 +73,8 @@
                         }, 1000);
                     })
                     .fail(function (xhr) {
+                        hideLoading();
+                        setButtonLoading(submitButton, false);
                         let msg = 'Verification failed.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
@@ -78,12 +87,16 @@
                 e.preventDefault();
                 $('#verify-error').hide().text('');
                 
+                showLoading('Resending verification code...');
+                
                 fbResendVerificationCode()
                     .done(function() {
+                        hideLoading();
                         $('#verify-success').text('Verification code resent to your email.').show();
                         setTimeout(() => $('#verify-success').hide(), 3000);
                     })
                     .fail(function(xhr) {
+                        hideLoading();
                         let msg = 'Failed to resend code.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;

@@ -212,6 +212,11 @@
             // Add method spoofing for PUT request with FormData
             formData.append('_method', 'PUT');
             
+            // Show loading indicator
+            const submitButton = $(this).find('button[type="submit"]');
+            setButtonLoading(submitButton, true);
+            showLoading('Updating profile...');
+            
             const apiBase = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:8000/api';
             $.ajax({
                 url: apiBase + '/profile',
@@ -221,11 +226,15 @@
                 contentType: false,
                 headers: fbAuthHeaders(),
                 success: function(res) {
+                    hideLoading();
+                    setButtonLoading(submitButton, false);
                     alert('Profile updated successfully!');
                     currentUser = res.user;
                     loadProfile();
                 },
                 error: function(xhr) {
+                    hideLoading();
+                    setButtonLoading(submitButton, false);
                     console.error('Profile update error:', xhr);
                     let errorMsg = 'Failed to update profile';
                     if (xhr.responseJSON) {
@@ -255,16 +264,25 @@
                 return;
             }
             
+            // Show loading indicator
+            const submitButton = $(this).find('button[type="submit"]');
+            setButtonLoading(submitButton, true);
+            showLoading('Changing password...');
+            
             fbChangePassword({
                 current_password: $('#current-password').val(),
                 password: newPassword,
                 password_confirmation: confirmPassword
             })
             .done(function() {
+                hideLoading();
+                setButtonLoading(submitButton, false);
                 alert('Password changed successfully!');
                 $('#password-form')[0].reset();
             })
             .fail(function(xhr) {
+                hideLoading();
+                setButtonLoading(submitButton, false);
                 alert('Error: ' + (xhr.responseJSON?.message || 'Failed to change password'));
             });
         }

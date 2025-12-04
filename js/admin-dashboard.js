@@ -167,12 +167,21 @@ function saveUser(e) {
         data.password = $('#user-password').val();
     }
     
+    // Show loading indicator
+    const submitButton = $(e.target).find('button[type="submit"]');
+    setButtonLoading(submitButton, true);
+    showLoading(id ? 'Updating user...' : 'Creating user...');
+    
     const promise = id ? fbAdminUpdateUser(id, data) : fbAdminCreateUser(data);
     
     promise.done(function() {
+        hideLoading();
+        setButtonLoading(submitButton, false);
         closeUserModal();
         loadUsers();
     }).fail(function(xhr) {
+        hideLoading();
+        setButtonLoading(submitButton, false);
         alert('Error: ' + (xhr.responseJSON?.message || 'Failed to save user'));
     });
 }
@@ -184,11 +193,15 @@ function editUser(id) {
 function deleteUser(id) {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
+    showLoading('Deleting user...');
+    
     fbAdminDeleteUser(id)
         .done(function() {
+            hideLoading();
             loadUsers();
         })
         .fail(function(xhr) {
+            hideLoading();
             alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete user'));
         });
 }
@@ -542,16 +555,25 @@ function saveService(e) {
         var promise = fbAdminUpdateService(id, data);
     }
     
+    // Show loading indicator
+    const submitButton = $(e.target).find('button[type="submit"]');
+    setButtonLoading(submitButton, true);
+    showLoading(id ? 'Updating service...' : 'Creating service...');
+    
     promise.done(function(res) {
         console.log('Service save response:', res);
         if (res.item && res.item.id) {
             console.log('Service created with ID:', res.item.id);
         }
+        hideLoading();
+        setButtonLoading(submitButton, false);
         alert('Service saved successfully!');
         closeServiceModal();
         loadServices();
     }).fail(function(xhr) {
         console.error('Service save error:', xhr);
+        hideLoading();
+        setButtonLoading(submitButton, false);
         let errorMsg = 'Failed to save service';
         if (xhr.responseJSON) {
             if (xhr.responseJSON.message) {
@@ -577,11 +599,15 @@ function editService(id) {
 function deleteService(id) {
     if (!confirm('Are you sure you want to delete this service?')) return;
     
+    showLoading('Deleting service...');
+    
     fbAdminDeleteService(id)
         .done(function() {
+            hideLoading();
             loadServices();
         })
         .fail(function(xhr) {
+            hideLoading();
             alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete service'));
         });
 }

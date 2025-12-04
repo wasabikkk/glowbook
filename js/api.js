@@ -334,9 +334,42 @@ function fbRedirectByRole(user) {
     }
 }
 
+// ---- Loading Indicator Helpers ----
+function showLoading(message = 'Loading...') {
+    // Remove any existing loading overlay
+    $('.loading-overlay').remove();
+    
+    // Create loading overlay
+    const overlay = $('<div class="loading-overlay"></div>');
+    const content = $('<div class="loading-content"></div>');
+    const spinner = $('<div class="loading-spinner-large"></div>');
+    const text = $('<p>' + message + '</p>');
+    
+    content.append(spinner).append(text);
+    overlay.append(content);
+    $('body').append(overlay);
+}
+
+function hideLoading() {
+    $('.loading-overlay').fadeOut(200, function() {
+        $(this).remove();
+    });
+}
+
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        $(button).addClass('loading').prop('disabled', true);
+    } else {
+        $(button).removeClass('loading').prop('disabled', false);
+    }
+}
+
 // Export helpers to global namespace
 window.fbGetToken = fbGetToken;
 window.fbSetToken = fbSetToken;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
+window.setButtonLoading = setButtonLoading;
 window.fbRegister = fbRegister;
 window.fbLogin = fbLogin;
 window.fbLogout = fbLogout;
