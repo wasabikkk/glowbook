@@ -84,10 +84,16 @@ function loadUsers() {
     fbAdminGetUsers({ search, role })
         .done(function(res) {
             const users = res.items || [];
-            let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>';
+            
+            // Table view (for desktop)
+            let tableHtml = '<div class="table-wrapper"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>';
+            
+            // Card view (for mobile)
+            let cardHtml = '<div class="table-card-view">';
             
             users.forEach(user => {
-                html += `<tr>
+                // Table row
+                tableHtml += `<tr>
                     <td>${user.id}</td>
                     <td>${user.first_name} ${user.last_name}</td>
                     <td>${user.email}</td>
@@ -97,10 +103,36 @@ function loadUsers() {
                         ${!user.is_super_admin && user.id !== currentUser.id ? `<button onclick="deleteUser(${user.id})">Delete</button>` : ''}
                     </td>
                 </tr>`;
+                
+                // Card
+                cardHtml += `<div class="table-card">
+                    <div class="table-card-row">
+                        <span class="table-card-label">ID:</span>
+                        <span class="table-card-value">${user.id}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Name:</span>
+                        <span class="table-card-value">${user.first_name} ${user.last_name}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Email:</span>
+                        <span class="table-card-value">${user.email}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Role:</span>
+                        <span class="table-card-value">${user.role}${user.is_super_admin ? ' (Super Admin)' : ''}</span>
+                    </div>
+                    <div class="table-card-actions">
+                        <button onclick="editUser(${user.id})">Edit</button>
+                        ${!user.is_super_admin && user.id !== currentUser.id ? `<button onclick="deleteUser(${user.id})">Delete</button>` : ''}
+                    </div>
+                </div>`;
             });
             
-            html += '</tbody></table>';
-            $('#users-list').html(html);
+            tableHtml += '</tbody></table></div>';
+            cardHtml += '</div>';
+            
+            $('#users-list').html(tableHtml + cardHtml);
         });
 }
 
@@ -214,12 +246,19 @@ function loadServices() {
     fbAdminGetServices({ search, status })
         .done(function(res) {
             const services = res.items || [];
-            let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Image</th><th>Price</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            const storageBase = typeof STORAGE_BASE !== 'undefined' ? STORAGE_BASE : 'http://127.0.0.1:8000';
+            
+            // Table view (for desktop)
+            let tableHtml = '<div class="table-wrapper"><table><thead><tr><th>ID</th><th>Name</th><th>Image</th><th>Price</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            
+            // Card view (for mobile)
+            let cardHtml = '<div class="table-card-view">';
             
             services.forEach(service => {
-                const storageBase = typeof STORAGE_BASE !== 'undefined' ? STORAGE_BASE : 'http://127.0.0.1:8000';
                 const imageUrl = service.image_url || storageBase + '/storage/services/default_service.png';
-                html += `<tr>
+                
+                // Table row
+                tableHtml += `<tr>
                     <td>${service.id}</td>
                     <td>${service.name}</td>
                     <td>
@@ -235,10 +274,48 @@ function loadServices() {
                         <button onclick="deleteService(${service.id})">Delete</button>
                     </td>
                 </tr>`;
+                
+                // Card
+                cardHtml += `<div class="table-card">
+                    <div class="table-card-row">
+                        <span class="table-card-label">ID:</span>
+                        <span class="table-card-value">${service.id}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Name:</span>
+                        <span class="table-card-value">${service.name}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Image:</span>
+                        <span class="table-card-value">
+                            <div class="service-image-container" style="width: 60px; height: 60px; margin: 0 auto;">
+                                <img src="${imageUrl}" alt="${service.name}" onerror="this.src='${storageBase}/storage/services/default_service.png'" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Price:</span>
+                        <span class="table-card-value">₱${service.price}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Duration:</span>
+                        <span class="table-card-value">${service.duration_minutes} min</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Status:</span>
+                        <span class="table-card-value">${service.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                    <div class="table-card-actions">
+                        <button onclick="editService(${service.id})">Edit</button>
+                        <button onclick="deleteService(${service.id})">Delete</button>
+                    </div>
+                </div>`;
             });
             
-            html += '</tbody></table>';
-            $('#services-list').html(html);
+            tableHtml += '</tbody></table></div>';
+            cardHtml += '</div>';
+            
+            $('#services-list').html(tableHtml + cardHtml);
         });
 }
 
@@ -619,7 +696,12 @@ function loadBookings() {
     fbGetBookings(status ? { status } : {})
         .done(function(res) {
             const bookings = res.items || [];
-            let html = '<table><thead><tr><th>ID</th><th>Client</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Aesthetician</th></tr></thead><tbody>';
+            
+            // Table view (for desktop)
+            let tableHtml = '<div class="table-wrapper"><table><thead><tr><th>ID</th><th>Client</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Aesthetician</th></tr></thead><tbody>';
+            
+            // Card view (for mobile)
+            let cardHtml = '<div class="table-card-view">';
             
             bookings.forEach(booking => {
                 // Format date to mm/dd/yyyy
@@ -673,7 +755,8 @@ function loadBookings() {
                     }
                 }
                 
-                html += `<tr>
+                // Table row
+                tableHtml += `<tr>
                     <td>${booking.id}</td>
                     <td>${booking.client?.first_name} ${booking.client?.last_name}</td>
                     <td>${booking.service?.name}</td>
@@ -682,10 +765,44 @@ function loadBookings() {
                     <td><span class="status-badge status-${booking.status}">${booking.status}</span></td>
                     <td>${booking.aesthetician ? booking.aesthetician.first_name + ' ' + booking.aesthetician.last_name : 'N/A'}</td>
                 </tr>`;
+                
+                // Card
+                cardHtml += `<div class="table-card">
+                    <div class="table-card-row">
+                        <span class="table-card-label">ID:</span>
+                        <span class="table-card-value">${booking.id}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Client:</span>
+                        <span class="table-card-value">${booking.client?.first_name} ${booking.client?.last_name}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Service:</span>
+                        <span class="table-card-value">${booking.service?.name}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Date:</span>
+                        <span class="table-card-value">${formattedDate}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Time:</span>
+                        <span class="table-card-value">${formattedTime}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Status:</span>
+                        <span class="table-card-value"><span class="status-badge status-${booking.status}">${booking.status}</span></span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Aesthetician:</span>
+                        <span class="table-card-value">${booking.aesthetician ? booking.aesthetician.first_name + ' ' + booking.aesthetician.last_name : 'N/A'}</span>
+                    </div>
+                </div>`;
             });
             
-            html += '</tbody></table>';
-            $('#bookings-list').html(html);
+            tableHtml += '</tbody></table></div>';
+            cardHtml += '</div>';
+            
+            $('#bookings-list').html(tableHtml + cardHtml);
         });
 }
 

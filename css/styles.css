@@ -217,10 +217,20 @@ body {
     border-radius: 4px;
 }
 
+/* Table wrapper for horizontal scrolling on mobile */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 20px;
+    display: block; /* Show by default on desktop */
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    min-width: 600px; /* Ensure table doesn't get too narrow */
 }
 
 table th,
@@ -233,6 +243,7 @@ table td {
 table th {
     background: #f8f9fa;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 table button {
@@ -248,6 +259,80 @@ table button {
 
 table button:hover {
     background: #0056b3;
+}
+
+table button:last-child {
+    margin-right: 0;
+}
+
+/* Card layout for mobile - alternative to table */
+.table-card-view {
+    display: none; /* Hidden by default on desktop */
+}
+
+.table-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.table-card-row:last-child {
+    border-bottom: none;
+}
+
+.table-card-label {
+    font-weight: 600;
+    color: #666;
+    min-width: 100px;
+    margin-right: 10px;
+}
+
+.table-card-value {
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+}
+
+.table-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.table-card-actions button {
+    flex: 1;
+    min-width: 80px;
+    padding: 8px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.table-card-actions button:hover {
+    background: #0056b3;
+}
+
+.table-card-actions button:last-child {
+    background: #dc3545;
+}
+
+.table-card-actions button:last-child:hover {
+    background: #c82333;
 }
 
 /* Service image container - fixed size */
@@ -1134,28 +1219,23 @@ table button:hover {
         min-width: auto;
     }
     
-    /* Tables - Make scrollable on mobile */
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
+    /* Tables - Show card view on mobile, hide table */
+    .table-wrapper {
+        display: none;
     }
     
-    table thead,
-    table tbody,
-    table tr {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
+    .table-card-view {
+        display: block;
+    }
+    
+    table {
+        min-width: 600px;
     }
     
     table th,
     table td {
         padding: 8px 6px;
         font-size: 0.85em;
-        word-wrap: break-word;
-        white-space: normal;
     }
     
     table button {
@@ -1282,6 +1362,14 @@ table button:hover {
 
 /* Tablet - Medium screens */
 @media (min-width: 769px) and (max-width: 1024px) {
+    /* Show table with horizontal scroll on tablets */
+    .table-wrapper {
+        display: block;
+    }
+    
+    .table-card-view {
+        display: none;
+    }
     .container {
         padding: 20px;
     }
@@ -1378,6 +1466,25 @@ table button:hover {
         padding: 4px 6px;
         font-size: 0.75em;
         margin: 1px;
+    }
+    
+    /* Card view styling for extra small screens */
+    .table-card {
+        padding: 12px;
+    }
+    
+    .table-card-label {
+        min-width: 80px;
+        font-size: 0.9em;
+    }
+    
+    .table-card-value {
+        font-size: 0.9em;
+    }
+    
+    .table-card-actions button {
+        padding: 8px 12px;
+        font-size: 0.85em;
     }
 }
 
