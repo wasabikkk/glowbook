@@ -218,26 +218,60 @@
             showLoading('Updating profile...');
             
             const apiBase = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:8000/api';
+            const authHeaders = fbAuthHeaders();
+            
+            // Debug logging (remove in production if needed)
+            console.log('Profile update request:', {
+                url: apiBase + '/profile',
+                hasAvatar: !!avatarFile,
+                hasToken: !!authHeaders.Authorization
+            });
+            
             $.ajax({
                 url: apiBase + '/profile',
                 method: 'POST', // Use POST with method spoofing
                 data: formData,
                 processData: false,
                 contentType: false,
-                headers: fbAuthHeaders(),
+                headers: authHeaders,
+                xhrFields: {
+                    withCredentials: false // Don't send cookies for CORS
+                },
                 success: function(res) {
                     hideLoading();
                     setButtonLoading(submitButton, false);
                     alert('Profile updated successfully!');
                     currentUser = res.user;
+                    // Clear the file input so same file can be uploaded again if needed
+                    $('#avatar-input').val('');
                     loadProfile();
                 },
-                error: function(xhr) {
+                error: function(xhr, status, error) {
                     hideLoading();
                     setButtonLoading(submitButton, false);
-                    console.error('Profile update error:', xhr);
+                    console.error('Profile update error:', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        response: xhr.responseJSON,
+                        error: error,
+                        url: xhr.responseURL || apiBase + '/profile'
+                    });
+                    
                     let errorMsg = 'Failed to update profile';
-                    if (xhr.responseJSON) {
+                    
+                    // Handle CORS errors
+                    if (status === 'error' && xhr.status === 0) {
+                        errorMsg = 'Network error: Unable to connect to server. Please check your internet connection and try again.';
+                    } else if (xhr.status === 403) {
+                        errorMsg = 'Access forbidden. Please make sure you are logged in and your session is valid.';
+                    } else if (xhr.status === 401) {
+                        errorMsg = 'Unauthorized. Please login again.';
+                        // Clear token and redirect to login
+                        fbSetToken('');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    } else if (xhr.responseJSON) {
                         if (xhr.responseJSON.message) {
                             errorMsg = xhr.responseJSON.message;
                         } else if (xhr.responseJSON.errors) {
@@ -247,7 +281,10 @@
                             });
                             errorMsg = errors.join('\n');
                         }
+                    } else if (xhr.status >= 500) {
+                        errorMsg = 'Server error. Please try again later or contact support.';
                     }
+                    
                     alert('Error: ' + errorMsg);
                 }
             });
