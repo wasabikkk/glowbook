@@ -585,7 +585,11 @@ function loadMyBookings() {
                 return orderA - orderB;
             });
             
-            let html = '<table><thead><tr><th>ID</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Aesthetician</th><th>Actions</th></tr></thead><tbody>';
+            // Table view (for desktop)
+            let tableHtml = '<div class="table-wrapper"><table><thead><tr><th>ID</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Aesthetician</th><th>Actions</th></tr></thead><tbody>';
+            
+            // Card view (for mobile)
+            let cardHtml = '<div class="table-card-view">';
             
             bookings.forEach(booking => {
                 // Format date to mm/dd/yyyy
@@ -639,7 +643,8 @@ function loadMyBookings() {
                     }
                 }
                 
-                html += `<tr>
+                // Table row
+                tableHtml += `<tr>
                     <td>${booking.id}</td>
                     <td>${booking.service?.name}</td>
                     <td>${formattedDate}</td>
@@ -648,10 +653,41 @@ function loadMyBookings() {
                     <td>${booking.aesthetician ? booking.aesthetician.first_name + ' ' + booking.aesthetician.last_name : 'Not assigned'}</td>
                     <td>${booking.status === 'pending' ? `<button onclick="cancelBooking(${booking.id})">Cancel</button>` : 'No actions'}</td>
                 </tr>`;
+                
+                // Card
+                cardHtml += `<div class="table-card">
+                    <div class="table-card-row">
+                        <span class="table-card-label">ID:</span>
+                        <span class="table-card-value">${booking.id}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Service:</span>
+                        <span class="table-card-value">${booking.service?.name}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Date:</span>
+                        <span class="table-card-value">${formattedDate}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Time:</span>
+                        <span class="table-card-value">${formattedTime}</span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Status:</span>
+                        <span class="table-card-value"><span class="status-badge status-${booking.status}">${booking.status}</span></span>
+                    </div>
+                    <div class="table-card-row">
+                        <span class="table-card-label">Aesthetician:</span>
+                        <span class="table-card-value">${booking.aesthetician ? booking.aesthetician.first_name + ' ' + booking.aesthetician.last_name : 'Not assigned'}</span>
+                    </div>
+                    ${booking.status === 'pending' ? `<div class="table-card-actions"><button onclick="cancelBooking(${booking.id})">Cancel</button></div>` : ''}
+                </div>`;
             });
             
-            html += '</tbody></table>';
-            $('#my-bookings-list').html(html);
+            tableHtml += '</tbody></table></div>';
+            cardHtml += '</div>';
+            
+            $('#my-bookings-list').html(tableHtml + cardHtml);
         });
 }
 

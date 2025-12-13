@@ -233,6 +233,13 @@ table {
     min-width: 600px; /* Ensure table doesn't get too narrow */
 }
 
+/* On desktop, table should fit container */
+@media (min-width: 1025px) {
+    table {
+        min-width: auto;
+    }
+}
+
 table th,
 table td {
     padding: 12px;
