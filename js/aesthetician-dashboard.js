@@ -50,7 +50,24 @@ function loadBookings() {
     
     fbGetBookings(status ? { status } : {})
         .done(function(res) {
-            const bookings = res.items || [];
+            let bookings = res.items || [];
+            
+            // Sort bookings by status: Pending → Approved → Rejected → Cancelled → Completed → Expired
+            const statusOrder = {
+                'pending': 1,
+                'approved': 2,
+                'rejected': 3,
+                'cancelled': 4,
+                'completed': 5,
+                'expired': 6
+            };
+            
+            bookings.sort((a, b) => {
+                const orderA = statusOrder[a.status] || 99;
+                const orderB = statusOrder[b.status] || 99;
+                return orderA - orderB;
+            });
+            
             let html = '<table><thead><tr><th>ID</th><th>Client</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             
             bookings.forEach(booking => {

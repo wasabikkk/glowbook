@@ -91,25 +91,21 @@
                     .done(function (res) {
                         if (res.token) {
                             fbSetToken(res.token);
+                            
+                            // Check if user requires verification
+                            if (res.requires_verification || !res.user?.email_verified_at) {
+                                hideLoading();
+                                setButtonLoading(submitButton, false);
+                                alert('Please verify your email before logging in. You will be redirected to the verification page.');
+                                window.location.href = 'verify-email.html';
+                                return;
+                            }
+                            
                             // Update loading message
                             $('.loading-content p').text('Loading your dashboard...');
-                            // Check if verified and redirect accordingly
-                            fbFetchProfile()
-                                .done(function(profileRes) {
-                                    const user = profileRes.user;
-                                    if (!user.email_verified_at) {
-                                        hideLoading();
-                                        window.location.href = 'verify-email.html';
-                                    } else {
-                                        hideLoading();
-                                        fbRedirectByRole(user);
-                                    }
-                                })
-                                .fail(function() {
-                                    hideLoading();
-                                    setButtonLoading(submitButton, false);
-                                    window.location.href = 'index.html';
-                                });
+                            // User is verified - redirect to dashboard
+                            hideLoading();
+                            fbRedirectByRole(res.user);
                         } else {
                             hideLoading();
                             setButtonLoading(submitButton, false);
