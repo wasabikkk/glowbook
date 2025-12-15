@@ -50,8 +50,10 @@
                 fbSetToken(tokenFromUrl);
             }
 
-            // Require auth; if missing, send back to login with redirect + code preserved
-            if (!fbGetToken()) {
+            // Require auth normally, but allow direct email link flow when a code is present
+            const hasToken = !!fbGetToken();
+            const hasCode = !!prefillCode;
+            if (!hasToken && !hasCode) {
                 const redirect = encodeURIComponent(window.location.pathname + window.location.search);
                 window.location.href = `login.html?redirect=${redirect}`;
                 return;
