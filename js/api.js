@@ -77,6 +77,17 @@ function fbApiJson(method, path, data) {
         // Handle invalid/unauthorized/tampered tokens
         if (xhr.status === 401 || xhr.status === 419) {
             const response = xhr.responseJSON;
+
+            // On verify page or verification endpoints, do not force-redirect;
+            // allow the caller to show a local error instead.
+            const pathname = window.location.pathname || '';
+            const isVerifyPage = pathname.includes('verify-email');
+            const isVerifyApi = xhr?.responseURL?.includes('/verify-email');
+
+            if (isVerifyPage || isVerifyApi) {
+                return;
+            }
+
             if (response && (
                 response.message === 'Invalid or unauthorized token.' ||
                 response.message === 'Unauthenticated.' ||
@@ -90,10 +101,10 @@ function fbApiJson(method, path, data) {
                 fbSetToken('');
                 
                 // Redirect to login if not already on login/register page
-                if (window.location.pathname !== '/login.html' && 
-                    window.location.pathname !== '/register.html' &&
-                    !window.location.pathname.includes('login.html') &&
-                    !window.location.pathname.includes('register.html')) {
+                if (pathname !== '/login.html' && 
+                    pathname !== '/register.html' &&
+                    !pathname.includes('login.html') &&
+                    !pathname.includes('register.html')) {
                     alert('Your session has expired or the token is invalid. Please login again.');
                     window.location.href = 'login.html';
                 }
