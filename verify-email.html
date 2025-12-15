@@ -20,7 +20,7 @@
 
         <form id="verify-form">
             <label>Verification Code
-                <input type="text" name="code" id="verify-code" maxlength="6" pattern="[0-9]{6}" required>
+                <input type="text" name="code" id="verify-code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required>
             </label>
 
             <button type="submit">Verify</button>
