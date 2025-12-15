@@ -37,14 +37,24 @@
 
     <script>
         $(function () {
-            // Note: Removed fbRequireAuth() to allow direct access from email links
-            // Users can access this page without being logged in
-
             // Prefill code from query parameter if provided (e.g., ?code=123456)
             const params = new URLSearchParams(window.location.search);
             const prefillCode = params.get('code');
             if (prefillCode) {
                 $('#verify-code').val(prefillCode.replace(/[^0-9]/g, '').slice(0, 6));
+            }
+
+            // Accept token from query param (e.g., ?token=...) for deep-link flows
+            const tokenFromUrl = params.get('token');
+            if (tokenFromUrl) {
+                fbSetToken(tokenFromUrl);
+            }
+
+            // Require auth; if missing, send back to login with redirect + code preserved
+            if (!fbGetToken()) {
+                const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `login.html?redirect=${redirect}`;
+                return;
             }
 
             $('#verify-code').on('input', function() {
