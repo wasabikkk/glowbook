@@ -37,7 +37,8 @@
 
     <script>
         $(function () {
-            fbRequireAuth();
+            // Note: Removed fbRequireAuth() to allow direct access from email links
+            // Users can access this page without being logged in
 
             // Prefill code from query parameter if provided (e.g., ?code=123456)
             const params = new URLSearchParams(window.location.search);
@@ -98,6 +99,13 @@
                 e.preventDefault();
                 $('#verify-error').hide().text('');
                 
+                // Check if user has a token (might be needed for resend)
+                const token = fbGetToken();
+                if (!token) {
+                    $('#verify-error').text('Please login first to resend verification code, or register again if you haven\'t logged in yet.').show();
+                    return;
+                }
+                
                 showLoading('Resending verification code...');
                 
                 fbResendVerificationCode()
@@ -111,6 +119,10 @@
                         let msg = 'Failed to resend code.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
+                        }
+                        // If unauthorized, suggest logging in
+                        if (xhr.status === 401) {
+                            msg = 'Please login first to resend verification code.';
                         }
                         $('#verify-error').text(msg).show();
                     });
