@@ -39,6 +39,13 @@
         $(function () {
             fbRequireAuth();
 
+            // Prefill code from query parameter if provided (e.g., ?code=123456)
+            const params = new URLSearchParams(window.location.search);
+            const prefillCode = params.get('code');
+            if (prefillCode) {
+                $('#verify-code').val(prefillCode.replace(/[^0-9]/g, '').slice(0, 6));
+            }
+
             $('#verify-code').on('input', function() {
                 this.value = this.value.replace(/[^0-9]/g, '');
             });
