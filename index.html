@@ -18,24 +18,31 @@
         $(function () {
             const token = fbGetToken();
             
+            // Default to login page if no token
             if (!token) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            // Check if user is verified and redirect
+            // If token exists, verify it's valid and redirect accordingly
             fbFetchProfile()
                 .done(function(res) {
                     const user = res.user;
                     
+                    // If user is not verified, clear token and redirect to login
+                    // The login page will handle redirecting to verification if needed
                     if (!user.email_verified_at) {
-                        window.location.href = 'verify-email.html';
+                        fbSetToken(''); // Clear unverified token
+                        window.location.href = 'login.html';
                         return;
                     }
                     
+                    // User is verified - redirect to their dashboard
                     fbRedirectByRole(user);
                 })
-                .fail(function() {
+                .fail(function(xhr) {
+                    // Token is invalid or expired - clear it and go to login
+                    fbSetToken('');
                     window.location.href = 'login.html';
                 });
         });
