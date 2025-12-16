@@ -154,6 +154,11 @@ function fbVerifyEmailCode(code) {
     return fbApiJson('POST', '/verify-email-code', { code });
 }
 
+// Public email verification (no auth required - for email link clicks from any device)
+function fbVerifyEmailCodePublic(email, code) {
+    return fbApiJson('POST', '/verify-email-code-public', { email, code });
+}
+
 function fbResendVerificationCode() {
     return fbApiJson('POST', '/resend-verification-code', {});
 }
@@ -388,6 +393,7 @@ window.fbFetchProfile = fbFetchProfile;
 window.fbUpdateProfile = fbUpdateProfile;
 window.fbChangePassword = fbChangePassword;
 window.fbVerifyEmailCode = fbVerifyEmailCode;
+window.fbVerifyEmailCodePublic = fbVerifyEmailCodePublic;
 window.fbResendVerificationCode = fbResendVerificationCode;
 window.fbForgotPassword = fbForgotPassword;
 window.fbResetPassword = fbResetPassword;

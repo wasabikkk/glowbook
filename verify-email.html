@@ -37,9 +37,11 @@
 
     <script>
         $(function () {
-            // Prefill code from query parameter if provided (e.g., ?code=123456)
+            // Prefill code and email from query parameters if provided (e.g., ?email=user@example.com&code=123456)
             const params = new URLSearchParams(window.location.search);
             const prefillCode = params.get('code');
+            const prefillEmail = params.get('email');
+            
             if (prefillCode) {
                 $('#verify-code').val(prefillCode.replace(/[^0-9]/g, '').slice(0, 6));
             }
@@ -50,10 +52,13 @@
                 fbSetToken(tokenFromUrl);
             }
 
-            // Require auth normally, but allow direct email link flow when a code is present
+            // Allow direct email link flow when email and code are present (for cross-device verification)
             const hasToken = !!fbGetToken();
             const hasCode = !!prefillCode;
-            if (!hasToken && !hasCode) {
+            const hasEmail = !!prefillEmail;
+            
+            // If no token and no email/code combo, redirect to login
+            if (!hasToken && !(hasCode && hasEmail)) {
                 const redirect = encodeURIComponent(window.location.pathname + window.location.search);
                 window.location.href = `login.html?redirect=${redirect}`;
                 return;
@@ -81,7 +86,26 @@
                 setButtonLoading(submitButton, true);
                 showLoading('Verifying email...');
 
-                fbVerifyEmailCode(code)
+                // Use public endpoint if no token but email is available (from email link)
+                // Otherwise use authenticated endpoint
+                const token = fbGetToken();
+                const email = prefillEmail || (params.get('email') || '');
+                
+                let verifyPromise;
+                if (!token && email) {
+                    // Public verification (no auth required) - for email link clicks from any device
+                    verifyPromise = fbVerifyEmailCodePublic(email, code);
+                } else if (token) {
+                    // Authenticated verification
+                    verifyPromise = fbVerifyEmailCode(code);
+                } else {
+                    hideLoading();
+                    setButtonLoading(submitButton, false);
+                    $('#verify-error').text('Please provide your email address or login first.').show();
+                    return;
+                }
+
+                verifyPromise
                     .done(function (res) {
                         hideLoading();
                         setButtonLoading(submitButton, false);
